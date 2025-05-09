@@ -97,36 +97,8 @@ app.get('/api/auth/me', async (req, res) => {
   }
 });
 
-// ----- SETTINGS ROUTES -----
-app.get('/api/settings', async (req, res) => {
-  try {
-    const [rows] = await pool.query('SELECT * FROM settings WHERE id = 1');
-    res.json(rows[0]);
-  } catch (err) {
-    console.error('Error fetching settings:', err);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
 
-app.put(
-  '/api/settings/:id',
-  body('voting_active').isBoolean(),
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ message: 'Invalid input', errors: errors.array() });
-    }
-    const { id } = req.params;
-    const { voting_active } = req.body;
-    try {
-      await pool.query('UPDATE settings SET voting_active = ? WHERE id = ?', [voting_active, id]);
-      res.json({ message: 'Settings updated successfully' });
-    } catch (err) {
-      console.error('Error updating settings:', err);
-      res.status(500).json({ message: 'Server error' });
-    }
-  }
-);
+
 
 // ----- CANDIDATES ROUTES -----
 app.get('/api/candidates', async (req, res) => {
@@ -261,6 +233,21 @@ app.post(
   }
 );
 
+app.post(
+  '/api/admin/reset-votes',
+  async (req, res) => {
+    try {
+      // Supprime tous les enregistrements de la table votes
+      await pool.query('TRUNCATE TABLE votes');
+      res.json({ message: 'Tous les votes ont été réinitialisés avec succès' });
+    } catch (err) {
+      console.error('Error resetting votes:', err);
+      res.status(500).json({ message: 'Server error lors de la réinitialisation des votes' });
+    }
+  }
+);
+
+
 app.get('/api/votes/results', async (req, res) => {
   try {
     const [kingRows] = await pool.query(
@@ -355,12 +342,30 @@ app.get('/api/admin/vote-stats', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+// ----- SETTINGS ROUTES -----
+
+// GET /api/settings
+// On renvoie { votingActive: <bool> }
+app.get('/api/settings', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT voting_active FROM settings WHERE id = 1');
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Settings not found' });
+    }
+    // transforme tinyint(1) en booléen
+    return res.json({ votingActive: !!rows[0].voting_active });
+  } catch (err) {
+    console.error('Error fetching settings:', err);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// PUT /api/settings
+// Le front envoie { votingActive: true } ou { votingActive: false }
 app.put(
   '/api/settings',
-  // On attend un booléen dans le corps JSON sous la clé "votingActive"
   body('votingActive').isBoolean(),
   async (req, res) => {
-    // Validation des paramètres
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res
@@ -369,9 +374,7 @@ app.put(
     }
 
     const { votingActive } = req.body;
-
     try {
-      // Mise à jour en base pour l'enregistrement id = 1
       await pool.query(
         'UPDATE settings SET voting_active = ? WHERE id = 1',
         [votingActive]
@@ -383,6 +386,7 @@ app.put(
     }
   }
 );
+
 // Démarrage du serveur
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);

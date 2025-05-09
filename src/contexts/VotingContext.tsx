@@ -161,8 +161,8 @@ export const VotingProvider: React.FC<VotingProviderProps> = ({ children }) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          kingId: selectedKing,
-          queenId: selectedQueen,
+          king_id: selectedKing,
+          queen_id: selectedQueen,
         }),
       });
       

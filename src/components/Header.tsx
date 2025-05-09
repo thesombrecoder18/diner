@@ -56,31 +56,9 @@ const Header: React.FC = () => {
             <span className="hidden md:inline">Résultats</span>
           </Link>
           
-          {!isAuthenticated && (
-            <Link 
-              to="/login" 
-              className={`btn flex items-center space-x-1 ${
-                isActive('/login') 
-                  ? 'text-gold-500 border-b-2 border-gold-500' 
-                  : 'text-white hover:text-gold-400'
-              }`}
-            >
-              <LogIn size={18} />
-              <span className="hidden md:inline">Admin</span>
-            </Link>
-          )}
+         
           
-          {isAuthenticated && (
-            <Link 
-              to="/admin/dashboard" 
-              className={`btn btn-gold flex items-center space-x-1 ${
-                location.pathname.includes('/admin') ? 'bg-gold-600' : ''
-              }`}
-            >
-              <Crown size={18} />
-              <span className="hidden md:inline">Dashboard</span>
-            </Link>
-          )}
+         
         </nav>
       </div>
     </header>
