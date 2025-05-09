@@ -38,8 +38,6 @@
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     );
 
-    -- Insert default admin (username: elizo18, password: passer)
-    INSERT INTO admins (username, password) VALUES ('elizo18', '$2b$10$8KvHGsH5GGTHUz7xYW9kPOl3Mz.AQcnK7OvN9Q8Jz7TZYGYRwC6Hy');
 
     -- Insert default settings
     INSERT INTO settings (voting_active) VALUES (false);

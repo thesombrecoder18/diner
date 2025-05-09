@@ -3,10 +3,10 @@ export const API_URL = 'http://localhost:3001/api';
 
 // Database Configuration
 export const DB_CONFIG = {
-  host: 'localhost',
-  user: 'root',
-  password: 'passer',
-  database: 'dgi_diner'
+  host: 'mysql-bayeeli.alwaysdata.net',
+  user: 'bayeeli_ka',
+  password: 'modoubeignet10',
+  database: 'bayeeli_diner'
 };
 
 // Default king/queen photos if none provided
