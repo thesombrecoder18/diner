@@ -1,10 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import { API_URL } from '../config/constants';
+import { persistenceClient, type User } from '../services/persistenceClient';
 
-interface User {
-  id: number;
-  username: string;
-}
 
 interface AuthContextType {
   user: User | null;
@@ -36,23 +32,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     const checkAuthStatus = async () => {
-      console.log('🔄 Checking auth status...');
       try {
-        const response = await fetch(`${API_URL}/auth/me`, {
-          credentials: 'include', // Assure l'envoi des cookies de session
-        });
-
-        console.log('🔁 /auth/me response status:', response.status);
-
-        if (!response.ok) {
-          throw new Error(`Not authenticated (${response.status})`);
-        }
-
-        const data = await response.json();
-        console.log('✅ User data:', data);
+        const data = await persistenceClient.authMe();
         setUser(data);
-      } catch (err: any) {
-        console.error('❌ Error fetching user info:', err.message);
+      } catch {
         setUser(null);
       } finally {
         setLoading(false);
@@ -66,30 +49,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (username: string, password: string) => {
     setLoading(true);
     setError(null);
-    console.log('🚪 Attempting login...');
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ username, password }),
-      });
-
-      console.log('🧾 Login response status:', response.status);
-
-      if (!response.ok) {
-        const errMsg = await response.text();
-        throw new Error(`Login failed: ${errMsg}`);
-      }
-
-      const data = await response.json();
-      console.log('✅ Login success. User:', data);
+      const data = await persistenceClient.login(username, password);
       setUser(data);
-    } catch (err: any) {
-      console.error('❌ Login error:', err.message);
-      setError(err.message);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Login failed';
+      setError(message);
+      throw new Error(message);
     } finally {
       setLoading(false);
     }
@@ -97,15 +63,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // 🚪 Fonction logout
   const logout = async () => {
-    console.log('🚪 Logging out...');
     try {
-      await fetch(`${API_URL}/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
-      });
+      await persistenceClient.logout();
       setUser(null);
-    } catch (err: any) {
-      console.error('❌ Logout error:', err.message);
+    } catch {
+      setUser(null);
     }
   };
 

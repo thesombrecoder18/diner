@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useVoting } from '../../contexts/VotingContext';
 import { AlertCircle, CheckCircle, Timer, BarChart3, RefreshCw, Lock, Unlock } from 'lucide-react';
-import { API_URL } from '../../config/constants';
+import { persistenceClient } from '../../services/persistenceClient';
 
 const VotingSettings: React.FC = () => {
   const { votingActive, refreshResults } = useVoting();
@@ -17,6 +17,7 @@ const VotingSettings: React.FC = () => {
     lastVoteTime: null as string | null
   });
   const [confirmReset, setConfirmReset] = useState(false);
+  const [resetDemoLoading, setResetDemoLoading] = useState(false);
   
   // Load current settings on mount
   useEffect(() => {
@@ -28,14 +29,8 @@ const VotingSettings: React.FC = () => {
   const fetchVoteStats = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/admin/vote-stats`, {
-        credentials: 'include',
-      });
-      console.log('Vote stats response:', response);
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data);
-      }
+      const data = await persistenceClient.getVoteStats();
+      setStats(data);
     } catch (err) {
       console.error('Error fetching vote stats:', err);
     } finally {
@@ -51,20 +46,7 @@ const VotingSettings: React.FC = () => {
     
     try {
       const newStatus = !isVotingActive;
-      
-      const response = await fetch(`${API_URL}/settings`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ votingActive: newStatus }),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update voting status');
-      }
+      await persistenceClient.updateVotingSettings(newStatus);
       
       setIsVotingActive(newStatus);
       setSuccess(`Vote ${newStatus ? 'activé' : 'désactivé'} avec succès!`);
@@ -90,15 +72,7 @@ const VotingSettings: React.FC = () => {
     setSuccess(null);
     
     try {
-      const response = await fetch(`${API_URL}/admin/reset-votes`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to reset votes');
-      }
+      await persistenceClient.resetVotes();
       
       await refreshResults();
       await fetchVoteStats();
@@ -111,6 +85,24 @@ const VotingSettings: React.FC = () => {
       setError(err instanceof Error ? err.message : 'Failed to reset votes');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResetDemoData = async () => {
+    setResetDemoLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      await persistenceClient.resetDemoData();
+      await refreshResults();
+      await fetchVoteStats();
+      setIsVotingActive(true);
+      setSuccess('Les données de démonstration locales ont été réinitialisées.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Impossible de réinitialiser les données de démonstration');
+    } finally {
+      setResetDemoLoading(false);
     }
   };
   
@@ -289,6 +281,22 @@ const VotingSettings: React.FC = () => {
           )}
         </div>
       </div>
+
+      {persistenceClient.isLocalMode && (
+        <div className="bg-elegant-900 rounded-lg p-6">
+          <h2 className="text-xl font-playfair font-bold mb-4">Mode démo local</h2>
+          <p className="text-elegant-400 text-sm mb-4">
+            Utilisez cette action pour remettre à zéro les comptes, candidats et votes de démonstration.
+          </p>
+          <button
+            onClick={handleResetDemoData}
+            disabled={resetDemoLoading}
+            className="btn btn-outline"
+          >
+            {resetDemoLoading ? 'Réinitialisation...' : 'Réinitialiser toutes les données de démo'}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

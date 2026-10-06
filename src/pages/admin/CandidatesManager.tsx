@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { PlusCircle, Trash2, Edit, AlertCircle, Crown, Search } from 'lucide-react';
 import { useVoting, Candidate } from '../../contexts/VotingContext';
 import CandidateForm from '../../components/CandidateForm';
-import { API_URL } from '../../config/constants';
+import { persistenceClient } from '../../services/persistenceClient';
 
 const CandidatesManager: React.FC = () => {
   const { 
@@ -41,22 +41,7 @@ const CandidatesManager: React.FC = () => {
     setError(null);
     
     try {
-      const url = editingCandidate 
-        ? `${API_URL}/candidates/${editingCandidate.id}` 
-        : `${API_URL}/candidates`;
-      
-      const method = editingCandidate ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        body: formData,
-        credentials: 'include',
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to save candidate');
-      }
+      await persistenceClient.saveCandidate(formData, editingCandidate?.id);
       
       await refreshCandidates();
       setShowForm(false);
@@ -77,15 +62,7 @@ const CandidatesManager: React.FC = () => {
     setError(null);
     
     try {
-      const response = await fetch(`${API_URL}/candidates/${id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to delete candidate');
-      }
+      await persistenceClient.deleteCandidate(id);
       
       await refreshCandidates();
     } catch (err) {

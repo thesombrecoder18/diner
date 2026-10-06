@@ -3,15 +3,7 @@ import { Link } from 'react-router-dom';
 import { Users, BarChart3, Crown, Settings } from 'lucide-react';
 import { useVoting } from '../../contexts/VotingContext';
 import ResultsChart from '../../components/ResultsChart';
-import { API_URL } from '../../config/constants';
-
-interface DashboardStats {
-  totalVotes: number;
-  totalCandidates: number;
-  kingsCount: number;
-  queensCount: number;
-  votingActive: boolean;
-}
+import { persistenceClient, type DashboardStats } from '../../services/persistenceClient';
 
 const AdminDashboard: React.FC = () => {
   const { 
@@ -34,12 +26,8 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch(`${API_URL}/admin/stats`);
-        
-        if (response.ok) {
-          const data = await response.json();
-          setStats(data);
-        }
+        const data = await persistenceClient.getAdminStats();
+        setStats(data);
       } catch (err) {
         console.error('Error fetching stats:', err);
       } finally {
