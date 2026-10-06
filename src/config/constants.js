@@ -1,18 +1,9 @@
-// API URL - Points to the Express server
-export const API_URL = 'http://localhost:3001/api';
-
-// Database Configuration
-export const DB_CONFIG = {
-  host: 'localhost',
-  user: 'root',
-  password: 'passer',
-  database: 'dgi_diner'
-};
+// API URL - /api est routé vers le backend (proxy en dev, rewrite en production)
+export const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 // Default king/queen photos if none provided
 export const DEFAULT_KING_PHOTO = 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=800';
 export const DEFAULT_QUEEN_PHOTO = 'https://images.pexels.com/photos/2681751/pexels-photo-2681751.jpeg?auto=compress&cs=tinysrgb&w=800';
-export const JWT_SECRET="dgqfX6Ctfn2Y5j2jRagWsssVNvehb9MhQjMgsNc7FsE=";
 // Chart colors
 export const CHART_COLORS = {
   kings: [

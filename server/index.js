@@ -15,15 +15,24 @@ import multer from 'multer';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Import DB config et secret
-const { DB_CONFIG, JWT_SECRET } = await import('../src/config/constants.js');
-
 // Initialise l’app
 const app = express();
-const port = 3001;
+const port = Number(process.env.PORT || 3001);
+
+const DB_CONFIG = {
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || 'passer',
+  database: process.env.DB_NAME || 'dgi_diner'
+};
+
+const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-production';
 
 // Middleware JSON, cookies, CORS
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+const corsOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map((origin) => origin.trim())
+  : true;
+app.use(cors({ origin: corsOrigins, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 
