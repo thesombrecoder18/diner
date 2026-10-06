@@ -15,29 +15,50 @@ import multer from 'multer';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Import DB config et secret
-const { DB_CONFIG, JWT_SECRET } = await import('../src/config/constants.js');
+const IS_VERCEL = Boolean(process.env.VERCEL);
+
+// Config DB et secret : variables d'environnement (Vercel), sinon constants.js en local
+const loadConfig = async () => {
+  if (process.env.DB_HOST && process.env.JWT_SECRET) {
+    return {
+      DB_CONFIG: {
+        host: process.env.DB_HOST,
+        port: Number(process.env.DB_PORT || 3306),
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME
+      },
+      JWT_SECRET: process.env.JWT_SECRET
+    };
+  }
+  if (IS_VERCEL) {
+    throw new Error('Missing DB_HOST / JWT_SECRET environment variables');
+  }
+  return import('../src/config/constants.js');
+};
+const { DB_CONFIG, JWT_SECRET } = await loadConfig();
 
 // Initialise l’app
 const app = express();
-const port = 3001;
+const port = Number(process.env.PORT || 3001);
 
 // Middleware JSON, cookies, CORS
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:5173', credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 
+// Dossier uploads (sur Vercel seul /tmp est inscriptible, et non persistant)
+const UPLOAD_DIR = process.env.UPLOAD_DIR
+  || (IS_VERCEL ? '/tmp/uploads' : path.join(__dirname, '..', 'uploads'));
+
 // Sert static le dossier uploads
-app.use(
-  '/uploads',
-  express.static(path.join(__dirname, '..', 'uploads'))
-);
+app.use('/uploads', express.static(UPLOAD_DIR));
 
 // Crée le dossier uploads s’il n’existe pas
-await fs.mkdir(path.join(__dirname, '..', 'uploads'), { recursive: true });
+await fs.mkdir(UPLOAD_DIR, { recursive: true });
 
 // Configure multer
-const upload = multer({ dest: path.join(__dirname, '..', 'uploads') });
+const upload = multer({ dest: UPLOAD_DIR });
 
 // Pool MySQL
 const pool = mysql.createPool({
@@ -387,8 +408,12 @@ app.put(
   }
 );
 
-// Démarrage du serveur
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-  console.log(`Database connected: successfully`);
-});
+// Démarrage du serveur (sur Vercel, l'app exportée est servie directement)
+if (!IS_VERCEL) {
+  app.listen(port, () => {
+    console.log(`Server is running on http://localhost:${port}`);
+    console.log(`Database connected: successfully`);
+  });
+}
+
+export default app;

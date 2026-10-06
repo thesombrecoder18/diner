@@ -55,3 +55,26 @@ En mode `api`, lancer aussi le serveur:
 ```bash
 npm run dev:all
 ```
+
+## Déploiement Vercel (multi-services)
+
+`vercel.json` déclare deux services :
+
+- **`app`** (racine, Vite) : le frontend.
+- **`server`** (`server/`, Node.js 22) : l'API Express, exposée sur `/api/*` et `/uploads/*`.
+
+Le frontend appelle `/api` sur le même domaine en production. Pour utiliser le backend,
+définir dans les variables d'environnement du projet Vercel :
+
+```bash
+VITE_PERSISTENCE_MODE=api
+DB_HOST=...      # MySQL accessible depuis Internet
+DB_PORT=3306
+DB_USER=...
+DB_PASSWORD=...
+DB_NAME=dgi_diner
+JWT_SECRET=...   # générer avec: node server/key.js
+```
+
+Sans ces variables, l'app reste en mode démo `local` (localStorage).
+Note : sur Vercel, les fichiers uploadés sont écrits dans `/tmp` et ne sont pas persistants.
