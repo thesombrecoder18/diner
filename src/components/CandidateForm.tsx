@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, ImagePlus, Crown } from 'lucide-react';
-import { API_URL, DEFAULT_KING_PHOTO, DEFAULT_QUEEN_PHOTO } from '../config/constants';
+import { DEFAULT_KING_PHOTO, DEFAULT_QUEEN_PHOTO } from '../config/constants';
 import { Candidate } from '../contexts/VotingContext';
 
 interface CandidateFormProps {
@@ -75,8 +75,8 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
       }
 
       await onSubmit(formData);
-    } catch (err: any) {
-      setError(err.message || 'Failed to save candidate');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save candidate');
     } finally {
       setLoading(false);
     }

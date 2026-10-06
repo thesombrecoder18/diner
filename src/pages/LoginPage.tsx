@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Lock, User, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { persistenceClient } from '../services/persistenceClient';
 
 const LoginPage: React.FC = () => {
   const { login, error: authError, loading } = useAuth();
@@ -46,6 +47,11 @@ const LoginPage: React.FC = () => {
           <p className="mt-2 text-elegant-400">
             Connectez-vous pour accéder au panneau d'administration
           </p>
+          {persistenceClient.isLocalMode && (
+            <p className="mt-3 text-sm text-gold-500">
+              Démo locale: {persistenceClient.demoAccounts[0].username} / {persistenceClient.demoAccounts[0].password}
+            </p>
+          )}
         </div>
         
         {errorMessage && (

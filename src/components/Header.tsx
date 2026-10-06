@@ -1,10 +1,9 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Crown, BarChart3, Vote, Home, LogIn } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { Crown, BarChart3, Vote, Home } from 'lucide-react';
+import { persistenceClient } from '../services/persistenceClient';
 
 const Header: React.FC = () => {
-  const { isAuthenticated } = useAuth();
   const location = useLocation();
   
   const isActive = (path: string) => {
@@ -56,10 +55,13 @@ const Header: React.FC = () => {
             <span className="hidden md:inline">Résultats</span>
           </Link>
           
-         
+           
           
-         
+          
         </nav>
+        <div className="mt-3 md:mt-0 text-xs text-elegant-400">
+          Mode: <span className="text-gold-500">{persistenceClient.mode === 'local' ? 'Démo locale' : 'API'}</span>
+        </div>
       </div>
     </header>
   );

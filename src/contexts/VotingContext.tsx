@@ -1,18 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import { API_URL } from '../config/constants';
+import { persistenceClient, type Candidate, type VoteCount } from '../services/persistenceClient';
 
-export interface Candidate {
-  id: number;
-  name: string;
-  gender: 'king' | 'queen';
-  image_url: string;
-}
-
-export interface VoteCount {
-  candidateId: number;
-  candidateName: string;
-  voteCount: number;
-}
+export type { Candidate, VoteCount } from '../services/persistenceClient';
 
 interface VotingContextType {
   candidates: Candidate[];
@@ -83,13 +72,7 @@ export const VotingProvider: React.FC<VotingProviderProps> = ({ children }) => {
 
   const refreshVotingStatus = async () => {
     try {
-      const response = await fetch(`${API_URL}/settings`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to get voting status');
-      }
-      
-      const { votingActive } = await response.json();
+      const { votingActive } = await persistenceClient.getVotingSettings();
       setVotingActive(votingActive);
     } catch (err) {
       console.error('Error fetching voting status:', err);
@@ -99,13 +82,7 @@ export const VotingProvider: React.FC<VotingProviderProps> = ({ children }) => {
 
   const refreshCandidates = async () => {
     try {
-      const response = await fetch(`${API_URL}/candidates`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch candidates');
-      }
-      
-      const data = await response.json();
+      const data = await persistenceClient.getCandidates();
       setCandidates(data);
     } catch (err) {
       console.error('Error fetching candidates:', err);
@@ -115,13 +92,7 @@ export const VotingProvider: React.FC<VotingProviderProps> = ({ children }) => {
 
   const refreshResults = async () => {
     try {
-      const response = await fetch(`${API_URL}/votes/results`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch results');
-      }
-      
-      const data = await response.json();
+      const data = await persistenceClient.getVoteResults();
       setKingResults(data.kings);
       setQueenResults(data.queens);
     } catch (err) {
@@ -132,13 +103,7 @@ export const VotingProvider: React.FC<VotingProviderProps> = ({ children }) => {
 
   const checkUserVoteStatus = async () => {
     try {
-      const response = await fetch(`${API_URL}/votes/check`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to check vote status');
-      }
-      
-      const { hasVoted } = await response.json();
+      const { hasVoted } = await persistenceClient.checkHasVoted();
       setHasVoted(hasVoted);
     } catch (err) {
       console.error('Error checking vote status:', err);
@@ -155,21 +120,7 @@ export const VotingProvider: React.FC<VotingProviderProps> = ({ children }) => {
     setError(null);
     
     try {
-      const response = await fetch(`${API_URL}/votes`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          king_id: selectedKing,
-          queen_id: selectedQueen,
-        }),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Voting failed');
-      }
+      await persistenceClient.submitVote(selectedKing, selectedQueen);
       
       setHasVoted(true);
       // Refresh results after voting
